@@ -1,5 +1,7 @@
 package com.example.huertohogartiendaapp.data
 
+import androidx.annotation.DrawableRes
+
 
 // data class es perfecta para guardar datos
 data class Producto(
@@ -8,6 +10,7 @@ data class Producto(
     val precio: Double,
     val stock: Int,
     val descripcion: String,
-    val categoria: String // Ej: "Frutas" o "Verduras"
+    val categoria: String, // Ej: "Frutas" o "Verduras"
+    @DrawableRes val imagenRes : Int// Para mostrar la imagen
     // val imagenUrl: String
 )

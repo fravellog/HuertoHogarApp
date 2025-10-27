@@ -10,42 +10,40 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 
-// Estado de la UI: Guarda las listas que la pantalla necesita
+// Estado de la UI: Guarda todas las listas que necesitamos
 data class MainUiState(
-    val productosMuestra: List<Producto> = emptyList(),
-    val productosSeccion: List<Producto> = emptyList()
+    val productosMuestra: List<Producto> = emptyList(), // Para HomeScreen
+    val verduras: List<Producto> = emptyList(),         // Para TiendaScreen
+    val frutas: List<Producto> = emptyList()            // Para TiendaScreen
 )
 
 
 class MainViewModel : ViewModel() {
 
 
-    // 1. Llama al Repositorio
     private val repository = ProductoRepository
 
 
-    // 2. Prepara el "Estado" (UiState) que la vista observará
     private val _uiState = MutableStateFlow(MainUiState())
     val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
 
-    // 3. El bloque init se ejecuta cuando el ViewModel es creado
     init {
         cargarProductos()
     }
 
 
     private fun cargarProductos() {
-        // Obtiene los datos del repositorio
         val muestra = repository.getProductosDeMuestra()
-        val todos = repository.getTodosLosProductos()
+        val verduras = repository.getVerduras()
+        val frutas = repository.getFrutas()
 
 
-        // Actualiza el estado
         _uiState.update { estadoActual ->
             estadoActual.copy(
                 productosMuestra = muestra,
-                productosSeccion = todos
+                verduras = verduras,
+                frutas = frutas
             )
         }
     }

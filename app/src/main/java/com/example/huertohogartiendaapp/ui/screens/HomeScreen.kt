@@ -12,15 +12,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 
 import androidx.compose.material.icons.Icons
 
-import androidx.compose.material.icons.filled.Article
-
-import androidx.compose.material.icons.filled.Email
-
-import androidx.compose.material.icons.filled.Person
-
-import androidx.compose.material.icons.filled.ShoppingCart
-
-import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.*
 
 import androidx.compose.material3.*
 
@@ -44,7 +36,13 @@ import androidx.compose.ui.unit.dp
 
 import androidx.compose.ui.unit.sp
 
+// Importamos el ViewModel
+
+import androidx.lifecycle.viewmodel.compose.viewModel
+
 import com.example.huertohogartiendaapp.R
+
+import com.example.huertohogartiendaapp.data.Producto // Importamos Producto
 
 import com.example.huertohogartiendaapp.ui.theme.HuertoHogarTiendaAppTheme
 
@@ -56,21 +54,29 @@ import com.example.huertohogartiendaapp.ui.theme.HuertoHogarTiendaAppTheme
 
 fun HomeScreen(
 
-    onViewProductsClick: () -> Unit
+    // AHORA RECIBE LA FUNCIÓN DE NAVEGACIÓN
+
+    onNavigate: (String) -> Unit
 
 ) {
 
-    // Scaffold nos da la estructura para la barra de navegación inferior
+    // Obtenemos el ViewModel para las ofertas
+
+    val viewModel: MainViewModel = viewModel()
+
+    val uiState by viewModel.uiState.collectAsState()
+
+
 
     Scaffold(
 
-        bottomBar = { AppBottomBar() }
+        // Le pasamos la función de navegación a la barra
+
+        bottomBar = { AppBottomBar(selectedItem = -1, onNavigate = onNavigate) } // -1 = Ninguno
 
     ) { innerPadding ->
 
 
-
-        // Usamos LazyColumn para que la pantalla sea "scrollable"
 
         LazyColumn(
 
@@ -78,7 +84,7 @@ fun HomeScreen(
 
                 .fillMaxSize()
 
-                .padding(innerPadding), // Padding para que no se solape con la barra inferior
+                .padding(innerPadding),
 
             horizontalAlignment = Alignment.CenterHorizontally
 
@@ -86,13 +92,11 @@ fun HomeScreen(
 
 
 
-            // 1. Banner Superior
-
             item {
 
                 Image(
 
-                    painter = painterResource(id = R.drawable.banner_verduras),
+                    painter = painterResource(id = R.drawable.placeholder_banner),
 
                     contentDescription = "Banner de Verduras",
 
@@ -102,15 +106,13 @@ fun HomeScreen(
 
                         .height(200.dp),
 
-                    contentScale = ContentScale.Crop // Asegura que la imagen cubra el espacio
+                    contentScale = ContentScale.Crop
 
                 )
 
             }
 
 
-
-            // 2. Título "Ofertas"
 
             item {
 
@@ -130,59 +132,31 @@ fun HomeScreen(
 
 
 
-            // 3. Lista de Ofertas
+            // Mostramos las 3 ofertas del ViewModel
 
-            item {
-
-                OfferItem(
-
-                    imageRes = R.drawable.lechuga,
-
-                    title = "Lechuga",
-
-                    price = "Precio: $1.180 c/u"
-
-                )
-
-            }
-
-            item {
+            items(uiState.productosMuestra) { producto ->
 
                 OfferItem(
 
-                    imageRes = R.drawable.tomate,
+                    imageRes = producto.imagenRes,
 
-                    title = "Tomate",
+                    title = producto.nombre,
 
-                    price = "Precio: $1.610 /kg"
-
-                )
-
-            }
-
-            item {
-
-                OfferItem(
-
-                    imageRes = R.drawable.zanahoria,
-
-                    title = "Zanahoria",
-
-                    price = "Precio: $1.200 /kg"
+                    price = "Precio: $${producto.precio}"
 
                 )
 
             }
 
 
-
-            // 4. Botón "Ver productos"
 
             item {
 
                 Button(
 
-                    onClick = onViewProductsClick,
+                    // El botón "Ver productos" ahora usa la función de navegación
+
+                    onClick = { onNavigate("products") },
 
                     modifier = Modifier
 
@@ -194,7 +168,7 @@ fun HomeScreen(
 
                     colors = ButtonDefaults.buttonColors(
 
-                        containerColor = Color(0xFFE0D6F5) // Color lila
+                        containerColor = Color(0xFFE0D6F5)
 
                     )
 
@@ -218,17 +192,17 @@ fun HomeScreen(
 
 @Composable
 
-fun AppBottomBar() {
+fun AppBottomBar(
 
-    // Estado para saber qué ícono está seleccionado
+    selectedItem: Int, // Para saber cuál marcar
 
-    var selectedItem by remember { mutableStateOf(0) }
+    onNavigate: (String) -> Unit // Para navegar
 
-
+) {
 
     NavigationBar(
 
-        containerColor = Color(0xFFDCEFDC) // Color verde claro de fondo
+        containerColor = Color(0xFFDCEFDC)
 
     ) {
 
@@ -240,7 +214,7 @@ fun AppBottomBar() {
 
             selected = selectedItem == 0,
 
-            onClick = { selectedItem = 0 }
+            onClick = { onNavigate("products") } // <-- ACCIÓN AÑADIDA
 
         )
 
@@ -252,7 +226,7 @@ fun AppBottomBar() {
 
             selected = selectedItem == 1,
 
-            onClick = { selectedItem = 1 }
+            onClick = { /* onNavigate("blog") */ } // (Para el futuro)
 
         )
 
@@ -264,7 +238,7 @@ fun AppBottomBar() {
 
             selected = selectedItem == 2,
 
-            onClick = { selectedItem = 2 }
+            onClick = { /* onNavigate("profile") */ } // (Para el futuro)
 
         )
 
@@ -276,7 +250,7 @@ fun AppBottomBar() {
 
             selected = selectedItem == 3,
 
-            onClick = { selectedItem = 3 }
+            onClick = { /* onNavigate("contact") */ } // (Para el futuro)
 
         )
 
@@ -288,7 +262,7 @@ fun AppBottomBar() {
 
             selected = selectedItem == 4,
 
-            onClick = { selectedItem = 4 }
+            onClick = { /* onNavigate("cart") */ } // (Para el futuro)
 
         )
 
@@ -312,6 +286,8 @@ fun OfferItem(
 
 ) {
 
+    // (Este código no cambia, pero es necesario tenerlo)
+
     Column(
 
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -319,8 +295,6 @@ fun OfferItem(
         modifier = Modifier.padding(bottom = 8.dp)
 
     ) {
-
-        // Tarjeta verde
 
         Surface(
 
@@ -332,7 +306,7 @@ fun OfferItem(
 
             shape = MaterialTheme.shapes.medium,
 
-            border = BorderStroke(2.dp, Color(0xFFA5D6A7)) // Borde verde
+            border = BorderStroke(2.dp, Color(0xFFA5D6A7))
 
         ) {
 
@@ -346,7 +320,7 @@ fun OfferItem(
 
                 Icon(
 
-                    painter = painterResource(id = R.drawable.ic_launcher_foreground), // Icono de carrito verde (placeholder)
+                    imageVector = Icons.Filled.ShoppingCart, // Icono de carrito estándar
 
                     contentDescription = "Carrito",
 
@@ -360,7 +334,7 @@ fun OfferItem(
 
                 Column(
 
-                    modifier = Modifier.weight(1f), // Ocupa el espacio restante
+                    modifier = Modifier.weight(1f),
 
                     verticalArrangement = Arrangement.Center
 
@@ -392,8 +366,6 @@ fun OfferItem(
 
 
 
-        // Botón "Agregar al Carrito"
-
         Button(
 
             onClick = { /* Lógica para agregar al carrito */ },
@@ -406,7 +378,7 @@ fun OfferItem(
 
             colors = ButtonDefaults.buttonColors(
 
-                containerColor = Color(0xFFE0D6F5) // Color lila
+                containerColor = Color(0xFFE0D6F5)
 
             )
 
@@ -422,7 +394,7 @@ fun OfferItem(
 
 
 
-// --- Vista Previa ---
+
 
 @Preview(showBackground = true, device = "id:pixel_6")
 
@@ -432,7 +404,7 @@ fun HomeScreenPreview() {
 
     HuertoHogarTiendaAppTheme {
 
-        HomeScreen(onViewProductsClick = {})
+        HomeScreen(onNavigate = {})
 
     }
 

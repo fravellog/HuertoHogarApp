@@ -1,29 +1,50 @@
 package com.example.huertohogartiendaapp.data
 
 
-// Un 'object' es un Singleton, solo hay una instancia de él.
+import com.example.huertohogartiendaapp.R
+
+
 object ProductoRepository {
 
 
-    // Lista privada con todos tus productos
+    // Lista completa con todas las imágenes
     private val todosLosProductos = listOf(
-        Producto("FR001", "Manzanas Fuji", 1200.0, 150, "Manzanas crujientes y dulces.", "Frutas"),
-        Producto("FR002", "Naranjas Valencia", 1000.0, 200, "Jugosas y ricas en vitamina C.", "Frutas"),
-        Producto("VR001", "Lechuga Costina", 900.0, 100, "Lechuga fresca para ensaladas.", "Verduras"),
-        Producto("VR002", "Papas (Saco 5kg)", 5000.0, 80, "Papas ideales para freír o cocer.", "Verduras")
-        // ... puedes agregar más si quieres
+        // Verduras
+        Producto("V01", "Brocoli", 1490.0, 100, "Brocoli fresco", "Verduras", R.drawable.brocoli),
+        Producto("V02", "Lechuga", 1180.0, 150, "Lechuga fresca c/u", "Verduras", R.drawable.lechuga),
+        Producto("V03", "Papas", 1350.0, 200, "Papas /kg", "Verduras", R.drawable.papa),
+        Producto("V04", "Cebollas", 1420.0, 180, "Cebollas /kg", "Verduras", R.drawable.cebolla),
+        Producto("V05", "Tomate", 1610.0, 130, "Tomate /kg", "Verduras", R.drawable.tomate),
+        Producto("V06", "Zanahoria", 1200.0, 160, "Zanahoria /kg", "Verduras", R.drawable.zanahoria),
+
+        // Frutas
+        Producto("F01", "Manzana", 1780.0, 200, "Manzana roja /kg", "Frutas", R.drawable.manzana),
+        Producto("F02", "Mango", 1570.0, 100, "Mango /kg", "Frutas", R.drawable.mango),
+        Producto("F03", "Frutilla", 3990.0, 80, "Frutillas /kg", "Frutas", R.drawable.frutilla),
+        Producto("F04", "Naranja", 1720.0, 150, "Naranjas /kg", "Frutas", R.drawable.naranja),
+        Producto("F05", "Platanos", 1400.0, 250, "Platanos /kg", "Frutas", R.drawable.platanos),
+        Producto("F06", "Sandia", 3500.0, 50, "Sandia c/u", "Frutas", R.drawable.sandia)
     )
 
 
-    // Función para obtener TODOS los productos (para la "sección de productos")
-    fun getTodosLosProductos(): List<Producto> {
-        return todosLosProductos
+    // Función para obtener solo las Verduras
+    fun getVerduras(): List<Producto> {
+        return todosLosProductos.filter { it.categoria == "Verduras" }
     }
 
 
-    // Función para obtener solo la MUESTRA (para la "pantalla principal")
+    // Función para obtener solo las Frutas
+    fun getFrutas(): List<Producto> {
+        return todosLosProductos.filter { it.categoria == "Frutas" }
+    }
+
+    // Función para las ofertas de la HomeScreen (la mantenemos)
     fun getProductosDeMuestra(): List<Producto> {
-        // Tomamos solo los primeros 2 como muestra
-        return todosLosProductos.take(2)
+        // Puedes elegir cuáles mostrar, ej: lechuga, tomate, zanahoria
+        return listOf(
+            todosLosProductos.find { it.id == "V02" }!!,
+            todosLosProductos.find { it.id == "V05" }!!,
+            todosLosProductos.find { it.id == "V06" }!!
+        )
     }
 }
