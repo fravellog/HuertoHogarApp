@@ -19,8 +19,6 @@ import androidx.compose.ui.unit.sp
 // ¡Importante para que R.drawable funcione!
 import com.example.huertohogartiendaapp.R
 import com.example.huertohogartiendaapp.ui.theme.HuertoHogarTiendaAppTheme
-
-
 @Composable
 fun LoginScreen(
     // Este parámetro nos servirá para notificar
@@ -29,8 +27,6 @@ fun LoginScreen(
 ) {
     // Estado para el checkbox, se maneja solo dentro de esta pantalla
     var isChecked by remember { mutableStateOf(false) }
-
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -38,16 +34,12 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center, // Centra todo verticalmente
         horizontalAlignment = Alignment.CenterHorizontally // Centra todo horizontalmente
     ) {
-
-
         // 1. Texto de bienvenida
         Text(
             text = "Bienvenidos a",
             fontSize = 18.sp,
             textAlign = TextAlign.Center
         )
-
-
         // 2. El Logo
         Image(
             // Usa el logo que pegaste en res/drawable
@@ -57,8 +49,6 @@ fun LoginScreen(
                 .fillMaxWidth(0.9f) // Ocupa el 90% del ancho
                 .padding(vertical = 24.dp)
         )
-
-
         // 3. El Checkbox y el Texto
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -92,8 +82,6 @@ fun LoginScreen(
         }
     }
 }
-
-
 // Vista previa para ver tu diseño sin ejecutar la app
 @Preview(showBackground = true, device = "id:pixel_6")
 @Composable

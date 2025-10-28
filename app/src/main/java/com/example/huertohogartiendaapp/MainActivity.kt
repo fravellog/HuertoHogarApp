@@ -53,8 +53,11 @@ fun AppNavigation() {
 
         composable(route = "signin") {
             SignInScreen(
-                onSignInClick = {
+                // ¡CAMBIO AQUÍ! 'onSignInClick' se renombra a 'onLoginSuccess'
+                onLoginSuccess = {
                     navController.navigate("home") {
+                        // Esta lógica es para que el usuario no pueda
+                        // "volver" a la pantalla de login
                         popUpTo("signin") { inclusive = true }
                     }
                 },
@@ -65,7 +68,12 @@ fun AppNavigation() {
 
         composable(route = "register") {
             RegisterScreen(
-                onRegisterClick = { navController.popBackStack() }
+                // ¡CAMBIO AQUÍ! 'onRegisterClick' se renombra a 'onRegisterSuccess'
+                onRegisterSuccess = {
+                    // Esta lógica hace que, tras registrarse,
+                    // "vuelva" a la pantalla anterior (la de login)
+                    navController.popBackStack()
+                }
             )
         }
 

@@ -25,19 +25,14 @@ object ProductoRepository {
         Producto("F05", "Platanos", 1400.0, 250, "Platanos /kg", "Frutas", R.drawable.platanos),
         Producto("F06", "Sandia", 3500.0, 50, "Sandia c/u", "Frutas", R.drawable.sandia)
     )
-
-
     // Función para obtener solo las Verduras
     fun getVerduras(): List<Producto> {
         return todosLosProductos.filter { it.categoria == "Verduras" }
     }
-
-
     // Función para obtener solo las Frutas
     fun getFrutas(): List<Producto> {
         return todosLosProductos.filter { it.categoria == "Frutas" }
     }
-
     // Función para las ofertas de la HomeScreen (la mantenemos)
     fun getProductosDeMuestra(): List<Producto> {
         // Puedes elegir cuáles mostrar, ej: lechuga, tomate, zanahoria

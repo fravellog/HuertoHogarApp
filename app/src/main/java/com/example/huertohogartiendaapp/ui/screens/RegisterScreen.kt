@@ -1,6 +1,5 @@
 package com.example.huertohogartiendaapp.ui.screens
 
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
@@ -10,7 +9,9 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -24,20 +25,22 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.huertohogartiendaapp.R
 import com.example.huertohogartiendaapp.ui.theme.HuertoHogarTiendaAppTheme
 
-
 @Composable
 fun RegisterScreen(
-    onRegisterClick: () -> Unit
+    mainViewModel: MainViewModel = viewModel(),
+    onRegisterSuccess: () -> Unit
 ) {
-    // Estados para los 4 campos
-    var username by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
+    val state by mainViewModel.registerUiState.collectAsState()
 
+    LaunchedEffect(state.registrationSuccess) {
+        if (state.registrationSuccess) {
+            onRegisterSuccess()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -46,7 +49,6 @@ fun RegisterScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // 1. Logo
         Image(
             painter = painterResource(id = R.drawable.logo_huerta),
             contentDescription = "Logo Chile Huerta",
@@ -54,9 +56,6 @@ fun RegisterScreen(
                 .fillMaxWidth(0.9f)
                 .padding(bottom = 16.dp)
         )
-
-
-        // 2. Título "Registro"
         Text(
             text = "Registro",
             fontSize = 28.sp,
@@ -64,109 +63,107 @@ fun RegisterScreen(
             modifier = Modifier.padding(bottom = 32.dp)
         )
 
-
         // 3. Campo de Usuario
-        Text(
-            text = "Nombre de Usuario",
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            fontSize = 14.sp
-        )
+        val usernameError = state.usernameError // <-- ¡CAMBIO AQUÍ!
         OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
-            label = { Text("Ingrese un nombre de usuario") },
+            value = state.username,
+            onValueChange = { mainViewModel.onRegisterUsernameChanged(it) },
+            label = { Text("Nombre de usuario") },
             leadingIcon = { Icon(Icons.Filled.Person, contentDescription = "Usuario") },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            singleLine = true
+            singleLine = true,
+            isError = usernameError != null, // <-- ¡CAMBIO AQUÍ!
+            supportingText = {
+                if (usernameError != null) { // <-- ¡CAMBIO AQUÍ!
+                    Text(text = usernameError, color = MaterialTheme.colorScheme.error)
+                }
+            }
         )
-
-
-        Spacer(modifier = Modifier.height(16.dp))
-
+        Spacer(modifier = Modifier.height(8.dp))
 
         // 4. Campo de Correo
-        Text(
-            text = "Correo electrónico",
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            fontSize = 14.sp
-        )
+        val emailError = state.emailError // <-- ¡CAMBIO AQUÍ!
         OutlinedTextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Ingrese un correo electrónico") },
+            value = state.email,
+            onValueChange = { mainViewModel.onRegisterEmailChanged(it) },
+            label = { Text("Correo electrónico") },
             leadingIcon = { Icon(Icons.Filled.Email, contentDescription = "Correo") },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            isError = emailError != null, // <-- ¡CAMBIO AQUÍ!
+            supportingText = {
+                if (emailError != null) { // <-- ¡CAMBIO AQUÍ!
+                    Text(text = emailError, color = MaterialTheme.colorScheme.error)
+                }
+            }
         )
-
-
-        Spacer(modifier = Modifier.height(16.dp))
-
+        Spacer(modifier = Modifier.height(8.dp))
 
         // 5. Campo de Contraseña
-        Text(
-            text = "Contraseña",
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            fontSize = 14.sp
-        )
+        val passwordError = state.passwordError // <-- ¡CAMBIO AQUÍ!
         OutlinedTextField(
-            value = password,
-            onValueChange = { password = it },
-            label = { Text("Ingrese una contraseña") },
+            value = state.password,
+            onValueChange = { mainViewModel.onRegisterPasswordChanged(it) },
+            label = { Text("Contraseña (mín. 6 caracteres)") },
             leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Contraseña") },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            isError = passwordError != null, // <-- ¡CAMBIO AQUÍ!
+            supportingText = {
+                if (passwordError != null) { // <-- ¡CAMBIO AQUÍ!
+                    Text(text = passwordError, color = MaterialTheme.colorScheme.error)
+                }
+            }
         )
-
-
-        Spacer(modifier = Modifier.height(16.dp))
-
+        Spacer(modifier = Modifier.height(8.dp))
 
         // 6. Campo de Repetir Contraseña
-        Text(
-            text = "Repita su contraseña",
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-            fontSize = 14.sp
-        )
+        val confirmPasswordError = state.confirmPasswordError // <-- ¡CAMBIO AQUÍ!
         OutlinedTextField(
-            value = confirmPassword,
-            onValueChange = { confirmPassword = it },
-            label = { Text("Escriba nuevamente su contraseña") },
+            value = state.confirmPassword,
+            onValueChange = { mainViewModel.onRegisterConfirmPasswordChanged(it) },
+            label = { Text("Repita su contraseña") },
             leadingIcon = { Icon(Icons.Filled.Lock, contentDescription = "Contraseña") },
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             singleLine = true,
             visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            isError = confirmPasswordError != null, // <-- ¡CAMBIO AQUÍ!
+            supportingText = {
+                if (confirmPasswordError != null) { // <-- ¡CAMBIO AQUÍ!
+                    Text(text = confirmPasswordError, color = MaterialTheme.colorScheme.error)
+                }
+            }
         )
-
-
         Spacer(modifier = Modifier.height(32.dp))
-
 
         // 7. Botón "Registrar cuenta"
         Button(
-            onClick = onRegisterClick,
+            onClick = { mainViewModel.onRegisterClick() },
             modifier = Modifier
                 .fillMaxWidth(0.7f)
                 .height(50.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFE0D6F5) // Color lila
-            )
+                containerColor = Color(0xFFE0D6F5)
+            ),
+            enabled = !state.isLoading
         ) {
-            Text(text = "Registrar cuenta", color = Color.DarkGray.copy(alpha = 0.8f))
+            if (state.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            } else {
+                Text(text = "Registrar cuenta", color = Color.DarkGray.copy(alpha = 0.8f))
+            }
         }
     }
 }
 
-
-// Vista previa
 @Preview(showBackground = true, device = "id:pixel_6")
 @Composable
 fun RegisterScreenPreview() {
     HuertoHogarTiendaAppTheme {
-        RegisterScreen(onRegisterClick = {})
+        RegisterScreen(onRegisterSuccess = {})
     }
 }
