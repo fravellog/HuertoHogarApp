@@ -12,7 +12,7 @@ object ProductoRepository {
         // Verduras
         Producto("V01", "Brocoli", 1490.0, 100, "Brocoli fresco", "Verduras", R.drawable.brocoli),
         Producto("V02", "Lechuga", 1180.0, 150, "Lechuga fresca c/u", "Verduras", R.drawable.lechuga),
-        Producto("V03", "Papas", 1350.0, 200, "Papas /kg", "Verduras", R.drawable.papa),
+        Producto("V03", "Papas", 1350.0, 200, "Papas /kg", "Verduras", R.drawable.Papa),
         Producto("V04", "Cebollas", 1420.0, 180, "Cebollas /kg", "Verduras", R.drawable.cebolla),
         Producto("V05", "Tomate", 1610.0, 130, "Tomate /kg", "Verduras", R.drawable.tomate),
         Producto("V06", "Zanahoria", 1200.0, 160, "Zanahoria /kg", "Verduras", R.drawable.zanahoria),
