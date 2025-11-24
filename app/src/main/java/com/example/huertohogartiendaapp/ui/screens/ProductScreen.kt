@@ -1,12 +1,13 @@
 package com.example.huertohogartiendaapp.ui.screens
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -16,26 +17,33 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage // <-- Import para imágenes desde URL
+import com.example.huertohogartiendaapp.MainViewModel
+import com.example.huertohogartiendaapp.R
 import com.example.huertohogartiendaapp.data.Producto
+import com.example.huertohogartiendaapp.ui.theme.HuertoHogarTiendaAppTheme
+import com.example.huertohogartiendaapp.util.formatToCLP
 
-@OptIn(ExperimentalMaterial3Api::class) // Necesario para stickyHeader
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ProductScreen(
     mainViewModel: MainViewModel = viewModel(),
-    // onNavigate es necesario si esta pantalla navega a otra
     onNavigate: (String) -> Unit
 ) {
-
     val uiState by mainViewModel.uiState.collectAsState()
+
+    // Carga los productos desde Firebase cuando la pantalla aparece
+    LaunchedEffect(Unit) {
+        mainViewModel.cargarProductos()
+    }
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp)
     ) {
-
         item {
             Text(
                 text = "Catálogo Completo",
@@ -45,48 +53,55 @@ fun ProductScreen(
             )
         }
 
-        // --- SECCIÓN VERDURAS ---
-        stickyHeader { // El título "Verduras" se quedará pegado arriba
-            Header(text = "Verduras")
-        }
+        if (uiState.isLoadingProductos && (uiState.verduras.isEmpty() && uiState.frutas.isEmpty())) {
+            item {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+        } else {
+            // --- SECCIÓN VERDURAS ---
+            if (uiState.verduras.isNotEmpty()) {
+                stickyHeader {
+                    Header(text = "Verduras")
+                }
+                items(uiState.verduras, key = { it.id }) { producto ->
+                    CatalogoItemCard(producto = producto)
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
+            }
 
-        items(uiState.verduras) { producto ->
-            CatalogoItemCard(producto = producto)
-            Spacer(modifier = Modifier.height(12.dp))
-        }
-
-        item {
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        // --- SECCIÓN FRUTAS ---
-        stickyHeader { // El título "Frutas" se quedará pegado arriba
-            Header(text = "Frutas")
-        }
-
-        items(uiState.frutas) { producto ->
-            CatalogoItemCard(producto = producto)
-            Spacer(modifier = Modifier.height(12.dp))
+            // --- SECCIÓN FRUTAS ---
+            if (uiState.frutas.isNotEmpty()) {
+                stickyHeader {
+                    Header(text = "Frutas")
+                }
+                items(uiState.frutas, key = { it.id }) { producto ->
+                    CatalogoItemCard(producto = producto)
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+            }
         }
     }
 }
 
-/**
- * Tarjeta simple para el catálogo (coincide con image_a9ed87.png)
- */
 @Composable
 fun CatalogoItemCard(producto: Producto) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(
-            painter = painterResource(id = producto.imagenRes),
+        // --- CORRECCIÓN AQUÍ ---
+        AsyncImage(
+            model = producto.imagen, // Se usa la propiedad correcta
             contentDescription = producto.nombre,
             modifier = Modifier
                 .size(80.dp)
                 .clip(RoundedCornerShape(12.dp)),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(id = R.drawable.placeholder_banner),
+            error = painterResource(id = R.drawable.placeholder_banner)
         )
 
         Spacer(modifier = Modifier.width(16.dp))
@@ -98,7 +113,7 @@ fun CatalogoItemCard(producto: Producto) {
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "$${"%.0f".format(producto.precio)}",
+                text = formatToCLP(producto.precio),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color.DarkGray
             )
@@ -111,13 +126,10 @@ fun CatalogoItemCard(producto: Producto) {
     }
 }
 
-/**
- * Composable simple para los títulos de sección (Verduras, Frutas)
- */
 @Composable
 fun Header(text: String) {
-    Surface( // Fondo blanco para tapar el contenido que pasa por debajo
-        color = MaterialTheme.colorScheme.background,
+    Surface(
+        color = MaterialTheme.colorScheme.surface,
         modifier = Modifier.fillMaxWidth()
     ) {
         Text(
@@ -126,5 +138,13 @@ fun Header(text: String) {
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(vertical = 8.dp)
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ProductScreenPreview() {
+    HuertoHogarTiendaAppTheme {
+        ProductScreen(onNavigate = {})
     }
 }

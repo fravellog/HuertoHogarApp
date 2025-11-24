@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services") // <-- CORRECTO
 }
 
 android {
@@ -40,7 +41,16 @@ android {
 }
 
 dependencies {
+    // --- DEPENDENCIAS DE FIREBASE ---
+    // El BoM (Bill of Materials) gestiona las versiones de todas las librerías de Firebase.
+    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
 
+    // Añade las dependencias para los servicios específicos que usarás.
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    // --------------------------------
+
+    // Dependencias existentes del proyecto
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -52,6 +62,14 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+    // Por ahora dejaremos Retrofit, aunque en el futuro lo reemplazaremos con Firebase.
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.google.android.material:material:1.12.0")
+
+    // Dependencias de Test
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -59,5 +77,4 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
-    implementation("com.google.android.material:material:1.12.0")
 }

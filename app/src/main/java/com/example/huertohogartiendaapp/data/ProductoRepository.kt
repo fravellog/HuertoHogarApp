@@ -1,45 +1,45 @@
 package com.example.huertohogartiendaapp.data
 
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
 
-import com.example.huertohogartiendaapp.R
+// Es una 'class' que se encargará de la lógica de datos de productos.
+class ProductoRepository {
 
+    // Obtenemos la instancia de la base de datos de Firestore
+    private val db = FirebaseFirestore.getInstance()
 
-object ProductoRepository {
+    // --- CORRECCIÓN CLAVE: La función ahora devuelve un Flow ---
+    // Un Flow es una corriente de datos que puede emitir valores con el tiempo.
+    fun getTodosLosProductosEnTiempoReal(): Flow<List<Producto>> = callbackFlow {
+        // 1. Nos conectamos a la colección "productos" en Firestore
+        val listener = db.collection("productos")
+            .addSnapshotListener { snapshot, error ->
+                // 2. Este bloque de código se ejecutará CADA VEZ que haya un cambio en Firestore.
 
+                // Si hay un error de Firebase (ej: sin permisos), cerramos el Flow con el error.
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
 
-    // Lista completa con todas las imágenes
-    private val todosLosProductos = listOf(
-        // Verduras
-        Producto("V01", "Brocoli", 1490.0, 100, "Brocoli fresco", "Verduras", R.drawable.brocoli),
-        Producto("V02", "Lechuga", 1180.0, 150, "Lechuga fresca c/u", "Verduras", R.drawable.lechuga),
-        Producto("V03", "Papas", 1350.0, 200, "Papas /kg", "Verduras", R.drawable.Papa),
-        Producto("V04", "Cebollas", 1420.0, 180, "Cebollas /kg", "Verduras", R.drawable.cebolla),
-        Producto("V05", "Tomate", 1610.0, 130, "Tomate /kg", "Verduras", R.drawable.tomate),
-        Producto("V06", "Zanahoria", 1200.0, 160, "Zanahoria /kg", "Verduras", R.drawable.zanahoria),
+                // Si el snapshot es nulo o no existe, enviamos una lista vacía.
+                if (snapshot == null || snapshot.isEmpty) {
+                    trySend(emptyList())
+                    return@addSnapshotListener
+                }
 
-        // Frutas
-        Producto("F01", "Manzana", 1780.0, 200, "Manzana roja /kg", "Frutas", R.drawable.manzana),
-        Producto("F02", "Mango", 1570.0, 100, "Mango /kg", "Frutas", R.drawable.mango),
-        Producto("F03", "Frutilla", 3990.0, 80, "Frutillas /kg", "Frutas", R.drawable.frutilla),
-        Producto("F04", "Naranja", 1720.0, 150, "Naranjas /kg", "Frutas", R.drawable.naranja),
-        Producto("F05", "Platanos", 1400.0, 250, "Platanos /kg", "Frutas", R.drawable.platanos),
-        Producto("F06", "Sandia", 3500.0, 50, "Sandia c/u", "Frutas", R.drawable.sandia)
-    )
-    // Función para obtener solo las Verduras
-    fun getVerduras(): List<Producto> {
-        return todosLosProductos.filter { it.categoria == "Verduras" }
-    }
-    // Función para obtener solo las Frutas
-    fun getFrutas(): List<Producto> {
-        return todosLosProductos.filter { it.categoria == "Frutas" }
-    }
-    // Función para las ofertas de la HomeScreen (la mantenemos)
-    fun getProductosDeMuestra(): List<Producto> {
-        // Puedes elegir cuáles mostrar, ej: lechuga, tomate, zanahoria
-        return listOf(
-            todosLosProductos.find { it.id == "V02" }!!,
-            todosLosProductos.find { it.id == "V05" }!!,
-            todosLosProductos.find { it.id == "V06" }!!
-        )
+                // 3. Convertimos los documentos de Firebase a nuestra lista de Productos.
+                val productos = snapshot.toObjects(Producto::class.java)
+
+                // 4. Enviamos la nueva lista de productos a través de la "tubería" (el Flow).
+                trySend(productos)
+            }
+
+        // 5. Esto es crucial: cuando el ViewModel deje de escuchar (ej: la app se cierra),
+        // el listener de Firebase se eliminará para ahorrar batería y datos.
+        awaitClose { listener.remove() }
     }
 }

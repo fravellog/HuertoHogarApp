@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Message // <-- 1. CAMBIO: Importación corregida
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Message
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -88,7 +88,8 @@ fun ContactoScreen() {
                 .fillMaxWidth()
                 .height(120.dp), // Altura fija para el campo de mensaje
             placeholder = { Text("Ingrese un mensaje") },
-            leadingIcon = { Icon(Icons.Default.Message, contentDescription = "Icono de mensaje") },
+            // ----- 2. CAMBIO: Se usa la versión AutoMirrored del ícono -----
+            leadingIcon = { Icon(Icons.AutoMirrored.Filled.Message, contentDescription = "Icono de mensaje") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             singleLine = false // Permite múltiples líneas
         )

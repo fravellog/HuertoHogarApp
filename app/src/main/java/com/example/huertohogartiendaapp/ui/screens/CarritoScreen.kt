@@ -1,45 +1,18 @@
-package com.example.huertohogartiendaapp.ui.screens // ¡Verifica tu paquete!
+package com.example.huertohogartiendaapp.ui.screens
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.animation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.ShoppingCart
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material.icons.filled.ShoppingBasket
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,95 +21,56 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.huertohogartiendaapp.R // ¡Importa tu R!
-
-// --- PASO 1: Define tu modelo de datos ---
-// (Puedes mover esto a un archivo en tu carpeta 'data')
-data class CartItem(
-    val id: Int,
-    val name: String,
-    val pricePerUnit: Double,
-    val unit: String,
-    val imageResId: Int, // ID de la imagen en res/drawable
-    var quantity: Int
-)
-
-// --- PASO 2: Datos de ejemplo ---
-// (En un ViewModel real, esto vendría de un repositorio)
-val dummyCartItems = listOf(
-    CartItem(1, "Lechuga", 1180.0, "c/u", R.drawable.lechuga, 1),
-    CartItem(2, "Tomate", 1610.0, "/kg", R.drawable.tomate, 2),
-    CartItem(3, "Zanahoria", 1200.0, "/kg", R.drawable.zanahoria, 3)
-)
-// --- NOTA: Añade 'img_lechuga.png', 'img_tomate.png', 'img_zanahoria.png' a 'res/drawable' ---
-
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import com.example.huertohogartiendaapp.CarritoItem
+import com.example.huertohogartiendaapp.MainViewModel
+import com.example.huertohogartiendaapp.R
+import com.example.huertohogartiendaapp.util.formatToCLP
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CarritoScreen() {
+fun CarritoScreen(
+    mainViewModel: MainViewModel = viewModel(),
+    navController: NavController
+) {
+    val uiState by mainViewModel.uiState.collectAsState()
 
-    // El estado de tu carrito.
-    // 'by remember' asegura que la UI se actualice si la lista cambia.
-    var cartItems by remember { mutableStateOf(dummyCartItems) }
-
-    // Calcular el total
-    val total = cartItems.sumOf { it.pricePerUnit * it.quantity }
-
-    Scaffold(
-        // --- BARRA SUPERIOR (TÍTULO) ---
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Mi Carrito", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = Color(0xFFF0F5F0) // Un verde muy pálido
+    if (uiState.productosEnCarrito.isEmpty()) {
+        EmptyCartScreen(onGoToShopClicked = {
+            navController.navigate("tienda")
+        })
+    } else {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Mi Canasta", fontWeight = FontWeight.Bold) },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
                 )
-            )
-        },
-
-        // --- BARRA INFERIOR (TOTAL Y PAGO) ---
-        bottomBar = {
-            CheckoutSummary(total = total, onCheckoutClick = { /* TODO: Lógica de pago */ })
-        }
-    ) { innerPadding -> // 'innerPadding' es el espacio que deja el Scaffold
-
-        // --- CONTENIDO PRINCIPAL (LA LISTA) ---
-
-        // Comprueba si el carrito está vacío
-        if (cartItems.isEmpty()) {
-            EmptyCartMessage(modifier = Modifier.padding(innerPadding))
-        } else {
-            // Muestra la lista de productos
+            },
+            bottomBar = {
+                CartSummary(
+                    total = uiState.totalCarrito,
+                    onCheckoutClicked = { /* TODO: Navegar a la pantalla de pago */ }
+                )
+            }
+        ) { innerPadding ->
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding) // Aplica el padding
-                    .padding(horizontal = 16.dp), // Padding lateral
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp)
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(
-                    items = cartItems,
-                    key = { it.id } // Ayuda a Compose a optimizar la lista
-                ) { item ->
-                    CartItemCard(
+                items(uiState.productosEnCarrito, key = { it.producto.id }) { item ->
+                    CarritoItemCard(
                         item = item,
-                        onQuantityChange = { newQuantity ->
-                            // TODO: Actualizar esto con la lógica de tu ViewModel
-                            cartItems = cartItems.map {
-                                if (it.id == item.id) {
-                                    it.copy(quantity = newQuantity)
-                                } else {
-                                    it
-                                }
-                            }
-                        },
-                        onRemoveItem = {
-                            // TODO: Actualizar esto con la lógica de tu ViewModel
-                            cartItems = cartItems.filter { it.id != item.id }
-                        }
+                        onIncrement = { mainViewModel.incrementarCantidad(item.producto.id) },
+                        onDecrement = { mainViewModel.decrementarCantidad(item.producto.id) },
+                        onRemove = { mainViewModel.eliminarProducto(item.producto.id) }
                     )
                 }
             }
@@ -144,217 +78,144 @@ fun CarritoScreen() {
     }
 }
 
-// --- COMPONENTES AUXILIARES ---
-
-/**
- * Muestra una tarjeta individual para un item en el carrito.
- */
 @Composable
-fun CartItemCard(
-    item: CartItem,
-    onQuantityChange: (Int) -> Unit,
-    onRemoveItem: () -> Unit
+fun EmptyCartScreen(onGoToShopClicked: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.ShoppingBasket,
+            contentDescription = "Carrito Vacío",
+            modifier = Modifier.size(120.dp),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f)
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = "Tu canasta está vacía",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Parece que aún no has agregado nada. ¡Explora nuestros productos frescos!",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(horizontal = 32.dp)
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        Button(
+            onClick = onGoToShopClicked,
+            modifier = Modifier
+                .fillMaxWidth(0.8f)
+                .height(50.dp)
+        ) {
+            Text("IR A LA TIENDA")
+        }
+    }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+private fun CarritoItemCard(
+    item: CarritoItem,
+    onIncrement: () -> Unit,
+    onDecrement: () -> Unit,
+    onRemove: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Imagen
-            Image(
-                painter = painterResource(id = item.imageResId),
-                contentDescription = item.name,
-                contentScale = ContentScale.Crop,
+            // Carga la imagen desde la URL de Firebase
+            AsyncImage(
+                model = item.producto.imagen,
+                contentDescription = item.producto.nombre,
                 modifier = Modifier
-                    .size(70.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(Color.LightGray)
+                    .size(80.dp)
+                    .clip(MaterialTheme.shapes.medium),
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(id = R.drawable.placeholder_banner),
+                error = painterResource(id = R.drawable.placeholder_banner)
             )
-
             Spacer(modifier = Modifier.width(16.dp))
-
-            // Nombre y Precio
-            Column(
-                modifier = Modifier.weight(1f), // Ocupa el espacio disponible
-                verticalArrangement = Arrangement.Center
-            ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(item.producto.nombre, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(formatToCLP(item.producto.precio), fontSize = 14.sp, color = Color.Gray)
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = item.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "$${item.pricePerUnit} ${item.unit}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    text = "Subtotal: ${formatToCLP(item.producto.precio * item.cantidad)}",
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            // Selector de Cantidad y Eliminar
-            Column(horizontalAlignment = Alignment.End) {
-                QuantitySelector(
-                    quantity = item.quantity,
-                    onIncrease = { onQuantityChange(item.quantity + 1) },
-                    onDecrease = { if (item.quantity > 1) onQuantityChange(item.quantity - 1) }
-                )
-                IconButton(onClick = onRemoveItem, modifier = Modifier.size(24.dp)) {
-                    Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Eliminar item",
-                        tint = Color.Red
-                    )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                IconButton(onClick = onIncrement, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Add, "Incrementar")
+                }
+                AnimatedContent(
+                    targetState = item.cantidad,
+                    transitionSpec = {
+                        if (targetState > initialState) {
+                            slideInVertically { h -> h } + fadeIn() togetherWith slideOutVertically { h -> -h } + fadeOut()
+                        } else {
+                            slideInVertically { h -> -h } + fadeIn() togetherWith slideOutVertically { h -> h } + fadeOut()
+                        }.using(SizeTransform(clip = false))
+                    },
+                    label = "Contador"
+                ) { targetCount ->
+                    Text("$targetCount", fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                }
+                IconButton(onClick = onDecrement, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Remove, "Decrementar")
                 }
             }
+            IconButton(onClick = onRemove, modifier = Modifier.padding(start = 8.dp)) {
+                Icon(Icons.Default.Delete, "Eliminar", tint = MaterialTheme.colorScheme.error)
+            }
         }
     }
 }
 
-/**
- * Muestra los botones + y - con la cantidad.
- */
 @Composable
-fun QuantitySelector(
-    quantity: Int,
-    onIncrease: () -> Unit,
-    onDecrease: () -> Unit
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        // Botón -
-        IconButton(onClick = onDecrease, modifier = Modifier.size(30.dp)) {
-            Icon(Icons.Default.Remove, contentDescription = "Restar uno")
-        }
-
-        Text(
-            text = "$quantity",
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.width(24.dp),
-            textAlign = TextAlign.Center
-        )
-
-        // Botón +
-        IconButton(onClick = onIncrease, modifier = Modifier.size(30.dp)) {
-            Icon(Icons.Default.Add, contentDescription = "Sumar uno")
-        }
-    }
-}
-
-/**
- * Muestra el resumen de pago en la barra inferior.
- */
-@Composable
-fun CheckoutSummary(
-    total: Double,
-    onCheckoutClick: () -> Unit
-) {
+fun CartSummary(total: Double, onCheckoutClicked: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shadowElevation = 8.dp // Sombra para separarlo del contenido
+        shadowElevation = 8.dp
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            // Fila del Total
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Text("Total:", style = MaterialTheme.typography.titleLarge)
                 Text(
-                    text = "Total:",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Medium
-                )
-                Text(
-                    text = "$${"%.0f".format(total)}", // Formatea sin decimales
+                    text = formatToCLP(total),
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
                 )
             }
-
             Spacer(modifier = Modifier.height(16.dp))
-
-            // Botón de Pago
             Button(
-                onClick = onCheckoutClick,
+                onClick = onCheckoutClicked,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp),
-                shape = RoundedCornerShape(12.dp)
+                    .height(50.dp)
             ) {
-                Text(
-                    text = "Proceder al Pago",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("PROCEDER AL PAGO", fontWeight = FontWeight.Bold)
             }
         }
-    }
-}
-
-/**
- * Muestra un mensaje cuando el carrito está vacío.
- */
-@Composable
-fun EmptyCartMessage(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.ShoppingCart,
-                contentDescription = "Carrito vacío",
-                modifier = Modifier.size(100.dp),
-                tint = Color.LightGray
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Tu carrito está vacío",
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color.Gray
-            )
-            Text(
-                text = "¡Añade productos para verlos aquí!",
-                style = MaterialTheme.typography.bodyLarge,
-                color = Color.Gray
-            )
-        }
-    }
-}
-
-// --- PREVISUALIZACIÓN ---
-@Preview(showBackground = true)
-@Composable
-fun CarritoScreenPreview() {
-    CarritoScreen()
-}
-
-@Preview(showBackground = true)
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun EmptyCartPreview() {
-    var cartItems by remember { mutableStateOf(emptyList<CartItem>()) }
-
-    // Simulación de la pantalla cuando la lista está vacía
-    Scaffold(
-        topBar = { CenterAlignedTopAppBar(title = { Text("Mi Carrito") }) },
-        bottomBar = { CheckoutSummary(total = 0.0, onCheckoutClick = {}) }
-    ) { innerPadding ->
-        EmptyCartMessage(modifier = Modifier.padding(innerPadding))
     }
 }

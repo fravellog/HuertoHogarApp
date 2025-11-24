@@ -1,16 +1,18 @@
 package com.example.huertohogartiendaapp.data
 
-import androidx.annotation.DrawableRes
+import com.google.firebase.firestore.IgnoreExtraProperties
 
-
-// data class es perfecta para guardar datos
+@IgnoreExtraProperties
 data class Producto(
-    val id: String,
-    val nombre: String,
-    val precio: Double,
-    val stock: Int,
-    val descripcion: String,
-    val categoria: String, // Ej: "Frutas" o "Verduras"
-    @DrawableRes val imagenRes : Int// Para mostrar la imagen
-    // val imagenUrl: String
+    val id: String = "",
+    val nombre: String = "",
+    val precio: Double = 0.0,
+    val stock: Int = 0,
+    val descripcion: String = "",
+    val categoria: String = "",
+    // --- CORRECCIÓN CLAVE ---
+    // El nombre de la propiedad ahora coincide con el campo de Firebase.
+    val imagen: String = ""
 )
+
+
