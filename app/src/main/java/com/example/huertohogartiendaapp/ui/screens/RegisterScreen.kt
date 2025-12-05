@@ -1,129 +1,121 @@
 package com.example.huertohogartiendaapp.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.huertohogartiendaapp.MainViewModel
 
 @Composable
 fun RegisterScreen(
     mainViewModel: MainViewModel = viewModel(),
-    onNavigateToLogin: () -> Unit,
-    onRegistrationSuccess: () -> Unit
+    onRegistrationSuccess: () -> Unit,
+    onNavigateToLogin: () -> Unit
 ) {
     val uiState by mainViewModel.uiState.collectAsState()
 
-    // Este LaunchedEffect se activa cuando el registro es exitoso
-    // para navegar a la pantalla anterior.
     LaunchedEffect(uiState.registrationSuccess) {
         if (uiState.registrationSuccess) {
-            // Llama a la función de éxito y resetea el estado en el ViewModel.
             onRegistrationSuccess()
             mainViewModel.registrationCompleted()
         }
     }
 
-    LazyColumn(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // --- TÍTULO ---
-        item {
-            Text(
-                text = "Crear una Cuenta",
-                style = MaterialTheme.typography.headlineLarge,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
+        Text("Crear una Cuenta", style = MaterialTheme.typography.headlineMedium)
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // --- CAMPO NOMBRE DE USUARIO CON VALIDACIÓN ---
+        OutlinedTextField(
+            value = uiState.registerUsername,
+            onValueChange = mainViewModel::onRegisterUsernameChanged,
+            label = { Text("Nombre de Usuario") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            isError = uiState.registerUsernameError != null,
+            supportingText = { uiState.registerUsernameError?.let { Text(it) } }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // --- CAMPO EMAIL CON VALIDACIÓN ---
+        OutlinedTextField(
+            value = uiState.registerEmail,
+            onValueChange = mainViewModel::onRegisterEmailChanged,
+            label = { Text("Correo Electrónico") },
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+            singleLine = true,
+            isError = uiState.registerEmailError != null,
+            supportingText = { uiState.registerEmailError?.let { Text(it) } }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // --- CAMPO CONTRASEÑA CON VALIDACIÓN ---
+        OutlinedTextField(
+            value = uiState.registerPassword,
+            onValueChange = mainViewModel::onRegisterPasswordChanged,
+            label = { Text("Contraseña") },
+            modifier = Modifier.fillMaxWidth(),
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            singleLine = true,
+            isError = uiState.registerPasswordError != null,
+            supportingText = { uiState.registerPasswordError?.let { Text(it) } }
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // --- CAMPO CONFIRMAR CONTRASEÑA CON VALIDACIÓN ---
+        OutlinedTextField(
+            value = uiState.registerConfirmPassword,
+            onValueChange = mainViewModel::onRegisterConfirmPasswordChanged,
+            label = { Text("Confirmar Contraseña") },
+            modifier = Modifier.fillMaxWidth(),
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+            singleLine = true,
+            isError = uiState.registerConfirmPasswordError != null,
+            supportingText = { uiState.registerConfirmPasswordError?.let { Text(it) } }
+        )
+
+        // Mensaje de error general para Firebase (opcional, por si algo más falla)
+        uiState.errorMessage?.let {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(it, color = MaterialTheme.colorScheme.error)
         }
 
-        // --- CAMPO USERNAME ---
-        item {
-            OutlinedTextField(
-                value = uiState.registerUsername,
-                onValueChange = mainViewModel::onRegisterUsernameChanged,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Nombre de usuario") },
-                // Ya no necesitamos la lógica de 'isError' ni el Text de error aquí
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
+        Spacer(modifier = Modifier.height(24.dp))
 
-        // --- CAMPO EMAIL ---
-        item {
-            OutlinedTextField(
-                value = uiState.registerEmail,
-                onValueChange = mainViewModel::onRegisterEmailChanged,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Correo electrónico") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        // --- CAMPO CONTRASEÑA ---
-        item {
-            OutlinedTextField(
-                value = uiState.registerPassword,
-                onValueChange = mainViewModel::onRegisterPasswordChanged,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Contraseña") },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        // --- CAMPO CONFIRMAR CONTRASEÑA ---
-        item {
-            OutlinedTextField(
-                value = uiState.registerConfirmPassword,
-                onValueChange = mainViewModel::onRegisterConfirmPasswordChanged,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text("Confirmar contraseña") },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                singleLine = true
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-        }
-
-        // --- BOTÓN DE REGISTRO ---
-        item {
-            Button(
-                onClick = mainViewModel::onRegisterClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp),
-                enabled = !uiState.isLoading
-            ) {
-                if (uiState.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
-                } else {
-                    Text("REGISTRARSE")
-                }
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-        }
-
-        // --- TEXTO PARA IR A LOGIN ---
-        item {
-            TextButton(onClick = onNavigateToLogin) {
-                Text("¿Ya tienes una cuenta? Inicia sesión")
+        Button(
+            onClick = mainViewModel::onRegisterClick,
+            modifier = Modifier.fillMaxWidth(),
+            enabled = !uiState.isLoading
+        ) {
+            if (uiState.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp))
+            } else {
+                Text("REGISTRARSE")
             }
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            "¿Ya tienes una cuenta? Inicia sesión",
+            modifier = Modifier.clickable(onClick = onNavigateToLogin)
+        )
     }
 }

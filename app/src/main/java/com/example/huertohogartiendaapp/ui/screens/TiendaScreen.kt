@@ -1,64 +1,121 @@
 package com.example.huertohogartiendaapp.ui.screens
 
+import android.util.Log
 import androidx.compose.animation.*
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import com.example.huertohogartiendaapp.MainViewModel
-import com.example.huertohogartiendaapp.R // <-- Import correcto para R
+import com.example.huertohogartiendaapp.R
 import com.example.huertohogartiendaapp.data.Producto
 import com.example.huertohogartiendaapp.util.formatToCLP
 import kotlinx.coroutines.delay
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TiendaScreen(mainViewModel: MainViewModel = viewModel()) {
     val uiState by mainViewModel.uiState.collectAsState()
 
-    // Carga los productos desde Firebase cuando la pantalla aparece
     LaunchedEffect(Unit) {
         mainViewModel.cargarProductos()
     }
 
-    // Obtenemos los productos desde el ViewModel
-    val productos = uiState.verduras + uiState.frutas
+    val verduras = uiState.verduras
+    val frutas = uiState.frutas
 
-    if (uiState.isLoadingProductos && productos.isEmpty()) {
-        // Muestra un indicador de carga solo si la lista está vacía
+    if (uiState.isLoadingProductos && (verduras.isEmpty() && frutas.isEmpty())) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
     } else {
-        // Muestra la cuadrícula de productos
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+        LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            items(productos, key = { it.id }) { producto ->
-                ProductCard(
-                    producto = producto,
-                    onAddToCartClicked = { mainViewModel.agregarAlCarrito(producto) }
-                )
+            // Verduras Category
+            if (verduras.isNotEmpty()) {
+                stickyHeader {
+                    CategoryHeader(title = "Verduras")
+                }
+
+                items(verduras.chunked(2)) { rowItems ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        rowItems.forEach { producto ->
+                            Box(modifier = Modifier.weight(1f)) {
+                                ProductCard(
+                                    producto = producto,
+                                    onAddToCartClicked = { mainViewModel.agregarAlCarrito(producto) }
+                                )
+                            }
+                        }
+                        // Add a spacer for alignment if the row is not full
+                        if (rowItems.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
             }
+
+            // Frutas Category
+            if (frutas.isNotEmpty()) {
+                stickyHeader {
+                    CategoryHeader(title = "Frutas")
+                }
+
+                items(frutas.chunked(2)) { rowItems ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        rowItems.forEach { producto ->
+                            Box(modifier = Modifier.weight(1f)) {
+                                ProductCard(
+                                    producto = producto,
+                                    onAddToCartClicked = { mainViewModel.agregarAlCarrito(producto) }
+                                )
+                            }
+                        }
+                        // Add a spacer for alignment if the row is not full
+                        if (rowItems.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryHeader(title: String) {
+    Surface(modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), color = MaterialTheme.colorScheme.background) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Text(
+                text = title,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -70,21 +127,28 @@ private fun ProductCard(
     onAddToCartClicked: () -> Unit
 ) {
     var addedToCart by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val imageName = producto.imagen.trim().lowercase()
+    val imageResId = remember(imageName) {
+        context.resources.getIdentifier(imageName, "drawable", context.packageName)
+    }
+
+    // LOG DE DIAGNÓSTICO
+    Log.d("ImageLoading", "TiendaScreen - Producto: ${producto.nombre}, Buscando drawable: '$imageName', ID Encontrado: $imageResId")
+
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            AsyncImage(
-                model = producto.imagen,
+            Image(
+                painter = if (imageResId != 0) painterResource(id = imageResId) else painterResource(id = R.drawable.placeholder_banner),
                 contentDescription = producto.nombre,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(120.dp),
-                contentScale = ContentScale.Crop,
-                placeholder = painterResource(id = R.drawable.placeholder_banner),
-                error = painterResource(id = R.drawable.placeholder_banner)
+                contentScale = ContentScale.Crop
             )
             Column(
                 modifier = Modifier

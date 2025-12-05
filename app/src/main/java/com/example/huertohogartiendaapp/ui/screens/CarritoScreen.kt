@@ -1,6 +1,8 @@
 package com.example.huertohogartiendaapp.ui.screens
 
+import android.util.Log
 import androidx.compose.animation.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,14 +12,13 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingBasket
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -25,10 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
-import com.example.huertohogartiendaapp.CarritoItem
-import com.example.huertohogartiendaapp.MainViewModel
 import com.example.huertohogartiendaapp.R
+import com.example.huertohogartiendaapp.data.CarritoItem
 import com.example.huertohogartiendaapp.util.formatToCLP
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -127,6 +126,16 @@ private fun CarritoItemCard(
     onDecrement: () -> Unit,
     onRemove: () -> Unit
 ) {
+    val context = LocalContext.current
+    val imageName = item.producto.imagen.trim().lowercase()
+    val imageResId = remember(imageName) {
+        context.resources.getIdentifier(imageName, "drawable", context.packageName)
+    }
+
+    // LOG DE DIAGNÓSTICO
+    Log.d("ImageLoading", "CarritoScreen - Producto: ${item.producto.nombre}, Buscando drawable: '$imageName', ID Encontrado: $imageResId")
+
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(2.dp),
@@ -137,15 +146,13 @@ private fun CarritoItemCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Carga la imagen desde la URL de Firebase
-            AsyncImage(
-                model = item.producto.imagen,
+            Image(
+                painter = if (imageResId != 0) painterResource(id = imageResId) else painterResource(id = R.drawable.placeholder_banner),
                 contentDescription = item.producto.nombre,
                 modifier = Modifier
                     .size(80.dp)
                     .clip(MaterialTheme.shapes.medium),
-                contentScale = ContentScale.Crop,
-                placeholder = painterResource(id = R.drawable.placeholder_banner),
-                error = painterResource(id = R.drawable.placeholder_banner)
+                contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {

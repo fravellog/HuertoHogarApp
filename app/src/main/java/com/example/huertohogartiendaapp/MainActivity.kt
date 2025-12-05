@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
+import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -60,7 +61,7 @@ fun AppShell() {
     val mainViewModel: MainViewModel = viewModel()
     val uiState by mainViewModel.uiState.collectAsState()
 
-    val screensWithBottomBar = listOf("home", "tienda", "blog", "perfil", "carrito")
+    val screensWithBottomBar = listOf("home", "tienda", "blog", "perfil", "carrito", "admin")
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
@@ -80,6 +81,7 @@ fun AppShell() {
             if (currentRoute in screensWithBottomBar) {
                 AppBottomBar(
                     currentRoute = currentRoute,
+                    isAdmin = uiState.isAdmin,
                     onNavigate = { route ->
                         navController.navigate(route) {
                             popUpTo(navController.graph.findStartDestination().id) {
@@ -103,8 +105,6 @@ fun AppShell() {
                 SignInScreen(
                     mainViewModel = mainViewModel,
                     onLoginSuccess = {
-                        // No es necesario llamar a mainViewModel.loginCompleted() aquí,
-                        // la navegación se encarga.
                         navController.navigate("home") { popUpTo("login") { inclusive = true } }
                     },
                     onCreateAccountClick = { navController.navigate("register") }
@@ -114,7 +114,6 @@ fun AppShell() {
                 RegisterScreen(
                     mainViewModel = mainViewModel,
                     onRegistrationSuccess = {
-                        // Al registrarse con éxito, vuelve a la pantalla de login
                         navController.popBackStack()
                     },
                     onNavigateToLogin = { navController.popBackStack() }
@@ -134,13 +133,22 @@ fun AppShell() {
                             popUpTo(0) { inclusive = true } // Borra todo el historial de navegación
                         }
                     },
-                    // --- CORRECCIÓN AQUÍ ---
-                    // Añadimos el parámetro que faltaba
                     onNavigateToDireccion = { navController.navigate("direccion") }
                 )
             }
+            composable("admin") {
+                AdminScreen(
+                    mainViewModel = mainViewModel, 
+                    onAddProduct = { navController.navigate("add_product") }
+                )
+            }
+            composable("add_product") {
+                AddEditProductScreen(
+                    mainViewModel = mainViewModel, 
+                    onNavigateBack = { navController.popBackStack() })
+            }
 
-            // --- NUEVA PANTALLA ---
+            // OTRAS PANTALLAS
             composable("direccion") {
                 DireccionScreen(
                     mainViewModel = mainViewModel,
@@ -154,6 +162,7 @@ fun AppShell() {
 @Composable
 fun AppBottomBar(
     currentRoute: String?,
+    isAdmin: Boolean,
     onNavigate: (String) -> Unit
 ) {
     NavigationBar(containerColor = Color(0xFFDCEFDC)) {
@@ -187,5 +196,13 @@ fun AppBottomBar(
             selected = currentRoute == "carrito",
             onClick = { onNavigate("carrito") }
         )
+        if (isAdmin) {
+            NavigationBarItem(
+                icon = { Icon(Icons.Filled.AdminPanelSettings, "Admin") },
+                label = { Text("Admin") },
+                selected = currentRoute == "admin",
+                onClick = { onNavigate("admin") }
+            )
+        }
     }
 }

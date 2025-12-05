@@ -1,6 +1,5 @@
 package com.example.huertohogartiendaapp.ui.screens
 
-import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -8,12 +7,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.automirrored.filled.ListAlt
-import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -24,14 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext // <-- IMPORTANTE: para obtener el contexto
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import com.example.huertohogartiendaapp.MainViewModel
+import coil.compose.rememberAsyncImagePainter
 import com.example.huertohogartiendaapp.R
 
 @Composable
@@ -42,141 +38,106 @@ fun PerfilScreen(
 ) {
     val uiState by mainViewModel.uiState.collectAsState()
 
-    // --- CORRECCIÓN 1: Obtener el contexto actual ---
-    val context = LocalContext.current
-
     val imagePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        mainViewModel.onFotoPerfilCambiada(uri)
-    }
+        contract = ActivityResultContracts.GetContent(),
+        onResult = { uri: Uri? ->
+            mainViewModel.onFotoPerfilCambiada(uri)
+        }
+    )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-        horizontalAlignment = Alignment.CenterHorizontally
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        contentPadding = PaddingValues(vertical = 24.dp)
     ) {
-        // --- Sección de Información del Usuario ---
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFE0D6F5))
-                .padding(top = 32.dp, bottom = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .clip(CircleShape)
-                    .background(Color.White)
-                    .clickable { imagePickerLauncher.launch("image/*") }
-            ) {
-                if (uiState.fotoPerfilUri != null) {
-                    AsyncImage(
-                        model = uiState.fotoPerfilUri,
-                        contentDescription = "Foto de perfil",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else {
-                    Image(
-                        painter = painterResource(id = R.drawable.profile_placeholder),
-                        contentDescription = "Foto de perfil por defecto",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
+        // Foto de Perfil
+        item {
+            ProfileImage(uiState.fotoPerfilUri) {
+                imagePickerLauncher.launch("image/*")
             }
-
             Spacer(modifier = Modifier.height(16.dp))
+        }
 
+        // Nombre de Usuario
+        item {
             Text(
-                text = uiState.loginEmailOrUsername.substringBefore('@').replaceFirstChar { if (it.isLowerCase()) it.titlecase() else it.toString() },
-                style = MaterialTheme.typography.headlineSmall,
+                text = uiState.loginEmailOrUsername, // O el nombre de usuario real
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = uiState.loginEmailOrUsername,
+                text = uiState.loginEmailOrUsername, // O el email real
                 style = MaterialTheme.typography.bodyLarge,
                 color = Color.Gray
             )
+            Spacer(modifier = Modifier.height(32.dp))
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // --- Menú de Opciones ---
-        Column(
-            modifier = Modifier.padding(horizontal = 16.dp)
-        ) {
-            ProfileOptionItem(
-                text = "Mis Pedidos",
-                icon = Icons.AutoMirrored.Filled.ListAlt,
-                onClick = { /* TODO: Navegar a la pantalla de historial de pedidos */ }
-            )
-            ProfileOptionItem(
-                text = "Mi Dirección",
-                icon = Icons.Default.LocationOn,
-                onClick = onNavigateToDireccion
-            )
-            // --- CORRECCIÓN 2: Lógica para abrir el cliente de correo ---
-            ProfileOptionItem(
-                text = "Ayuda y Soporte",
-                icon = Icons.Default.HelpOutline,
-                onClick = {
-                    val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
-                        data = Uri.parse("mailto:") // Solo apps de email deberían responder
-                        putExtra(Intent.EXTRA_EMAIL, arrayOf("soporte.huerto@example.com", "contacto.equipo@example.com")) // Añade tus correos aquí
-                        putExtra(Intent.EXTRA_SUBJECT, "Ayuda con la App Huerto Hogar")
-                        putExtra(Intent.EXTRA_TEXT, "Hola, necesito ayuda con lo siguiente:\n\n")
-                    }
-                    // Inicia la actividad para abrir el cliente de correo
-                    context.startActivity(Intent.createChooser(emailIntent, "Enviar correo usando..."))
-                }
-            )
+        // Opciones de menú
+        item {
+            ProfileMenuItem("Mi Dirección de Envío", onNavigateToDireccion)
+            Divider(modifier = Modifier.padding(horizontal = 16.dp))
         }
 
-        Spacer(modifier = Modifier.weight(1f)) // Empuja el botón de cerrar sesión hacia abajo
-
-        // --- Botón de Cerrar Sesión ---
-        Button(
-            onClick = onLogout,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-                .height(50.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFF5E0E0),
-                contentColor = MaterialTheme.colorScheme.error
-            )
-        ) {
-            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Cerrar Sesión")
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("CERRAR SESIÓN", fontWeight = FontWeight.Bold)
+        // Botón de Cerrar Sesión
+        item {
+            Spacer(modifier = Modifier.height(32.dp))
+            Button(
+                onClick = onLogout,
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 32.dp)
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Cerrar Sesión")
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("CERRAR SESIÓN")
+            }
         }
     }
 }
 
-// Composable reutilizable para cada opción del menú (se mantiene igual)
 @Composable
-fun ProfileOptionItem(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-    // ... (el código de esta función no necesita cambios)
-    Card(
+fun ProfileImage(imageUri: Uri?, onImageClick: () -> Unit) {
+    Box(contentAlignment = Alignment.BottomEnd) {
+        Image(
+            painter = if (imageUri != null) rememberAsyncImagePainter(imageUri) else painterResource(id = R.drawable.placeholder_banner),
+            contentDescription = "Foto de Perfil",
+            modifier = Modifier
+                .size(130.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable(onClick = onImageClick),
+            contentScale = ContentScale.Crop
+        )
+        Icon(
+            imageVector = Icons.Default.CameraAlt,
+            contentDescription = "Cambiar Foto",
+            modifier = Modifier
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary)
+                .padding(6.dp),
+            tint = Color.White
+        )
+    }
+}
+
+@Composable
+fun ProfileMenuItem(title: String, onClick: () -> Unit) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(imageVector = icon, contentDescription = text, tint = MaterialTheme.colorScheme.primary)
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(text = text, style = MaterialTheme.typography.bodyLarge)
-        }
+        Icon(
+            imageVector = Icons.Default.LocationOn, // Icono de ejemplo
+            contentDescription = null,
+            modifier = Modifier.size(28.dp)
+        )
+        Spacer(modifier = Modifier.width(16.dp))
+        Text(text = title, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
     }
 }

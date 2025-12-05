@@ -6,13 +6,9 @@ import com.google.firebase.firestore.IgnoreExtraProperties
 data class Producto(
     val id: String = "",
     val nombre: String = "",
-    val precio: Double = 0.0,
-    val stock: Int = 0,
+    val precio: Long = 0L,
+    val stock: Long = 0L, // <--- CAMBIO CLAVE: De Int a Long
     val descripcion: String = "",
     val categoria: String = "",
-    // --- CORRECCIÓN CLAVE ---
-    // El nombre de la propiedad ahora coincide con el campo de Firebase.
     val imagen: String = ""
 )
-
-

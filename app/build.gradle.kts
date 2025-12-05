@@ -2,7 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    id("com.google.gms.google-services") // <-- CORRECTO
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -48,6 +48,7 @@ dependencies {
     // Añade las dependencias para los servicios específicos que usarás.
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage")
     // --------------------------------
 
     // Dependencias existentes del proyecto

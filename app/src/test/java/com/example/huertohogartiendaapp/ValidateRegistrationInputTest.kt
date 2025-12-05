@@ -1,65 +1,64 @@
-package com.example.huertohogartiendaapp.util
+package com.example.huertohogartiendaapp
 
-import android.util.Patterns
+import com.example.huertohogartiendaapp.util.Validation
+import org.junit.Assert.*
+import org.junit.Test
 
-class ValidateRegistrationInput {
+class ValidateRegistrationInputTest {
 
-    fun execute(
-        username: String,        email: String,
-        pass: String,
-        repeatedPass: String
-    ): ValidationResult {
-        // 1. Validar que el nombre de usuario no esté vacío
-        if (username.isBlank()) {
-            return ValidationResult(
-                successful = false,
-                errorMessage = "El nombre de usuario no puede estar vacío."
-            )
-        }
+    // --- PRUEBAS PARA LA VALIDACIÓN DE EMAIL ---
 
-        // 2. Validar que el correo no esté vacío
-        if (email.isBlank()) {
-            return ValidationResult(
-                successful = false,
-                errorMessage = "El correo electrónico no puede estar vacío."
-            )
-        }
+    @Test
+    fun `email es válido`() {
+        assertTrue(Validation.isValidEmail("test@example.com"))
+    }
 
-        // 3. Validar que el formato del correo sea válido
-        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
-            return ValidationResult(
-                successful = false,
-                errorMessage = "El formato del correo electrónico no es válido."
-            )
-        }
+    @Test
+    fun `email sin @ no es válido`() {
+        assertFalse(Validation.isValidEmail("testexample.com"))
+    }
 
-        // 4. Validar que la contraseña no esté vacía
-        if (pass.isBlank()) {
-            return ValidationResult(
-                successful = false,
-                errorMessage = "La contraseña no puede estar vacía."
-            )
-        }
+    @Test
+    fun `email sin dominio no es válido`() {
+        assertFalse(Validation.isValidEmail("test@"))
+    }
 
-        // 5. Validar que la contraseña tenga un largo mínimo
-        if (pass.length < 8) {
-            return ValidationResult(
-                successful = false,
-                errorMessage = "La contraseña debe tener al menos 8 caracteres."
-            )
-        }
+    @Test
+    fun `email vacío no es válido`() {
+        assertFalse(Validation.isValidEmail(""))
+    }
 
-        // 6. Validar que las contraseñas coincidan
-        if (pass != repeatedPass) {
-            return ValidationResult(
-                successful = false,
-                errorMessage = "Las contraseñas no coinciden."
-            )
-        }
+    // --- PRUEBAS PARA LA VALIDACIÓN DE CONTRASEÑA ---
 
-        // 7. Si todas las validaciones pasan, el resultado es exitoso
-        return ValidationResult(
-            successful = true
-        )
+    @Test
+    fun `contraseña es válida`() {
+        assertTrue(Validation.isValidPassword("123456"))
+    }
+
+    @Test
+    fun `contraseña corta no es válida`() {
+        assertFalse(Validation.isValidPassword("123"))
+    }
+
+    @Test
+    fun `contraseña vacía no es válida`() {
+        assertFalse(Validation.isValidPassword(""))
+    }
+
+    // --- PRUEBAS PARA LA COINCIDENCIA DE CONTRASEÑAS ---
+
+    @Test
+    fun `contraseñas coinciden`() {
+        assertTrue(Validation.doPasswordsMatch("password123", "password123"))
+    }
+
+    @Test
+    fun `contraseñas no coinciden`() {
+        assertFalse(Validation.doPasswordsMatch("password123", "password456"))
+    }
+
+    @Test
+    fun `una contraseña vacía no coincide`() {
+        assertFalse(Validation.doPasswordsMatch("password123", ""))
     }
 }

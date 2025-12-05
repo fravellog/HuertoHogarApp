@@ -11,7 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.huertohogartiendaapp.MainViewModel
+import com.example.huertohogartiendaapp.ui.screens.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

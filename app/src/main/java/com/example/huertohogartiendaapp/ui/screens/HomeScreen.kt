@@ -1,5 +1,6 @@
 package com.example.huertohogartiendaapp.ui.screens
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -16,13 +17,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
-import com.example.huertohogartiendaapp.MainViewModel
 import com.example.huertohogartiendaapp.R
 import com.example.huertohogartiendaapp.data.Producto
 import com.example.huertohogartiendaapp.util.formatToCLP
@@ -31,9 +31,17 @@ import com.example.huertohogartiendaapp.util.formatToCLP
 fun HomeScreen(mainViewModel: MainViewModel = viewModel()) {
     val uiState by mainViewModel.uiState.collectAsState()
 
-    // Llama a cargar los productos desde Firebase cuando la pantalla aparece
     LaunchedEffect(Unit) {
         mainViewModel.cargarProductos()
+    }
+
+    val productosEnOferta by remember(uiState.verduras, uiState.frutas) {
+        derivedStateOf {
+            val allProducts = uiState.verduras + uiState.frutas
+            val offerNames = listOf("sandia", "brocoli", "frutilla")
+            // CORRECCIÓN: Se usa trim() y lowercase() para evitar errores de espacios o mayúsculas
+            allProducts.filter { it.nombre.trim().lowercase() in offerNames }
+        }
     }
 
     LazyColumn(
@@ -43,11 +51,9 @@ fun HomeScreen(mainViewModel: MainViewModel = viewModel()) {
     ) {
         item {
             Image(
-                painter = painterResource(id = R.drawable.placeholder_banner), // Banner
+                painter = painterResource(id = R.drawable.placeholder_banner),
                 contentDescription = "Banner Huerto Hogar",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp),
+                modifier = Modifier.fillMaxWidth().height(200.dp),
                 contentScale = ContentScale.Crop
             )
         }
@@ -61,24 +67,16 @@ fun HomeScreen(mainViewModel: MainViewModel = viewModel()) {
             )
         }
 
-        // Muestra un indicador de carga o los productos
-        if (uiState.isLoadingProductos && (uiState.verduras.isEmpty() && uiState.frutas.isEmpty())) {
-            item {
-                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            }
+        if (uiState.isLoadingProductos && productosEnOferta.isEmpty()) {
+            item { CircularProgressIndicator() }
+        } else if (productosEnOferta.isEmpty()) {
+            item { Text("No hay ofertas disponibles en este momento.") }
         } else {
-            val productosEnOferta = (uiState.verduras + uiState.frutas).shuffled().take(3)
-            if (productosEnOferta.isEmpty()) {
-                item { Text("No hay ofertas disponibles en este momento.") }
-            } else {
-                items(productosEnOferta, key = { it.id }) { producto ->
-                    OfferItem(
-                        producto = producto,
-                        onAddToCartClicked = { mainViewModel.agregarAlCarrito(producto) }
-                    )
-                }
+            items(productosEnOferta, key = { it.id }) { producto ->
+                OfferItem(
+                    producto = producto,
+                    onAddToCartClicked = { mainViewModel.agregarAlCarrito(producto) }
+                )
             }
         }
     }
@@ -86,41 +84,35 @@ fun HomeScreen(mainViewModel: MainViewModel = viewModel()) {
 
 @Composable
 private fun OfferItem(producto: Producto, onAddToCartClicked: () -> Unit) {
-    // Animación de entrada para la tarjeta de oferta
+    val context = LocalContext.current
+    val imageName = producto.imagen.trim().lowercase()
+    val imageResId = remember(imageName) {
+        context.resources.getIdentifier(imageName, "drawable", context.packageName)
+    }
+
+    // LOG DE DIAGNÓSTICO
+    Log.d("ImageLoading", "HomeScreen - Producto: ${producto.nombre}, Buscando drawable: '$imageName', ID Encontrado: $imageResId")
+
     AnimatedVisibility(
         visible = true,
-        enter = fadeIn(animationSpec = tween(durationMillis = 500, delayMillis = 100)) +
-                slideInVertically(
-                    initialOffsetY = { it / 2 },
-                    animationSpec = tween(durationMillis = 500, delayMillis = 100)
-                ),
-        exit = fadeOut()
+        enter = fadeIn(animationSpec = tween(500)) + slideInVertically(initialOffsetY = { it / 2 }),
+        exit = fadeOut(animationSpec = tween(500))
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.padding(bottom = 16.dp)
         ) {
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth(0.9f)
-                    .height(100.dp),
+                modifier = Modifier.fillMaxWidth(0.9f).height(100.dp),
                 shape = MaterialTheme.shapes.medium,
                 border = BorderStroke(2.dp, Color(0xFFA5D6A7))
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Carga la imagen desde la URL de Firebase
-                    AsyncImage(
-                        model = producto.imagen,
+                Row(modifier = Modifier.fillMaxSize().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Image(
+                        painter = if (imageResId != 0) painterResource(id = imageResId) else painterResource(id = R.drawable.placeholder_banner),
                         contentDescription = producto.nombre,
                         modifier = Modifier.size(80.dp),
-                        contentScale = ContentScale.Crop,
-                        placeholder = painterResource(id = R.drawable.placeholder_banner),
-                        error = painterResource(id = R.drawable.placeholder_banner)
+                        contentScale = ContentScale.Crop
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
@@ -132,9 +124,7 @@ private fun OfferItem(producto: Producto, onAddToCartClicked: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Button(
                 onClick = onAddToCartClicked,
-                modifier = Modifier
-                    .fillMaxWidth(0.6f)
-                    .height(40.dp),
+                modifier = Modifier.fillMaxWidth(0.6f).height(40.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0D6F5))
             ) {
                 Text(text = "Agregar al Carrito", color = Color.DarkGray.copy(alpha = 0.8f), fontSize = 12.sp)
